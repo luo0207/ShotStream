@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="ShotStream, multi-shot long video generation, Efficient Causal Architecture, Interactive Storytelling">
+    <title>ShotStream: Streaming Multi-Shot Video Generation for Interactive Storytelling</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* 平滑滚动效果 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: #f0f2f5; 
+            color: #333333;
+            overflow-x: hidden;
+            line-height: 1.7;
+            padding-bottom: 50px;
+        }
+
+        .content-card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 1300px;
+            margin: 40px auto;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 新增：专门为导航栏设计的窄卡片样式 */
+        .nav-card {
+            padding: 25px 40px;
+            margin: -20px auto 40px auto; /* 向上拉近一点与头部的距离 */
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .content-card {
+                width: 95%;
+                margin: 20px auto;
+                padding: 30px 15px;
+            }
+            .nav-card {
+                padding: 15px;
+                margin: -10px auto 20px auto;
+            }
+        }
+
+        /* 视频卡片样式 */
+        .video-item {
+            position: relative;
+            background: #e8e3d7;
+            border: 3px solid #3C3026;
+            box-shadow: none;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .demo-video-section {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto 2rem auto; 
+            position: relative;
+            z-index: 1;
+            border-radius: 8px; 
+            overflow: hidden;   
+            text-align: center; 
+        }
+
+        .video-item:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: none;
+        }
+
+        .video-label {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #d47d3f;
+            text-align: center;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem; 
+        }
+
+        .ablation-item-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%; 
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-caption {
+            padding: 1rem 1.25rem;
+            background: #e8e3d7;
+            border-top: 2px solid #3C3026;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #2a2a2a;
+            min-height: 60px;
+            position: relative;
+        }
+
+        .caption-content {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            padding-right: 30px;
+        }
+
+        .caption-content.expanded {
+            -webkit-line-clamp: unset;
+            line-clamp: unset;
+        }
+
+        .caption-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 24px;
+            height: 24px;
+            background: #3C3026;
+            color: #D1B392;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .caption-toggle:hover {
+            background: #d47d3f;
+            color: #3C3026;
+        }
+
+        .section-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        .section-nav-item {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            background: rgba(212, 184, 150, 0.2);
+            color: #333333;
+            text-decoration: none;
+            font-weight: 400;
+            font-size: 0.9rem;
+            border: 1px solid rgba(212, 125, 63, 0.4);
+            transition: all 0.3s ease;
+            font-family: 'Lato', sans-serif;
+            letter-spacing: 0.02em;
+            box-shadow: none;
+        }
+
+        .section-nav-item:hover {
+            background: rgba(212, 125, 63, 0.2);
+            border-color: #d47d3f;
+            color: #d47d3f;
+            transform: translateY(-1px);
+        }
+
+        /* --- 独立导航栏样式 --- */
+        .global-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem; 
+            flex-wrap: wrap;
+        }
+
+        .global-nav-item {
+            color: #333333;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: 'Libre Baskerville', serif; 
+            transition: color 0.3s ease;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        .global-nav-item::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: #d47d3f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .global-nav-item:hover {
+            color: #d47d3f;
+        }
+
+        .global-nav-item:hover::after {
+            width: 100%;
+        }
+        /* ----------------------------------- */
+
+        .hero-logo {
+            max-width: 80%;
+            width: 400px; 
+            height: auto;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-section {
+            min-height: auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50px; left: -50px; right: -50px; bottom: -50px;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-subtitle {
+            font-family: 'Libre Baskerville', serif;
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            color: #444444;
+            margin-bottom: 1rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tldr-wrapper {
+            max-width: 800px; 
+            width: 100%;
+            margin: 3rem auto 1rem; 
+            position: relative;
+            z-index: 1;
+        }
+
+        .abstract-section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .abstract-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.5rem; 
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #222222;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center; 
+        }
+
+        .abstract-text {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #333333;
+            text-align: justify;
+        }
+
+        .section {
+            padding: 0;
+            background: transparent;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            font-style: normal;
+            color: #d47d3f;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.1em;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            width: 100%;
+            align-items: start;
+        }
+
+        .video-grid.three-col {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .video-grid.three-col>.video-item,
+        .video-grid.three-col>.ablation-item-wrapper {
+            flex: 0 1 360px;
+            max-width: 100%;
+        }
+
+        .video-grid.two-col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2.5rem;
+            width: 100%;
+            align-items: start;
+        }
+
+        .ablation-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 2rem;
+            width: 100%;
+            align-items: start;
+        }
+
+        .ablation-grid > .ablation-item-wrapper:nth-child(1) {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .ablation-grid > .ablation-item-wrapper:nth-child(2) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .ablation-grid > .ablation-item-wrapper:nth-child(3) {
+            grid-column: 3;
+            grid-row: 1 / span 2; 
+            align-self: center;   
+        }
+
+        .ablation-grid > .ablation-item-wrapper:nth-child(4) {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .ablation-grid > .ablation-item-wrapper:nth-child(5) {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .comparison-item {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .comparison-label {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #d47d3f;
+            text-align: center;
+            letter-spacing: 0.1em;
+        }
+
+        .comparison-video-wrapper {
+            position: relative;
+            background: #fff;
+            border: 3px solid #3C3026;
+            box-shadow: none;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .comparison-video-wrapper:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: none;
+        }
+
+        .comparison-video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .comparison-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            .video-grid, .comparison-grid, .video-grid.three-col, .video-grid.two-col {
+                grid-template-columns: 1fr;
+            }
+            .ablation-grid {
+                grid-template-columns: 1fr;
+            }
+            .ablation-grid > .ablation-item-wrapper:nth-child(n) {
+                grid-column: auto;
+                grid-row: auto;
+            }
+            .global-nav {
+                gap: 1.5rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .video-item {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. Hero Section Card -->
+    <div class="content-card">
+        <section class="hero-section">
+            <img src="figs/shotstream_logo.png" class="hero-logo" alt="ShotStream Logo">
+            <p class="hero-subtitle">Streaming Multi-Shot Video Generation for Interactive Storytelling</p>
+
+            <div class="authors-section">
+                <div class="authors">
+                    <span class="author-block">
+                        <a href="https://luo0207.github.io/yawenluo/">Yawen Luo</a><sup>1,2</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://xiaoyushi97.github.io/">Xiaoyu Shi</a><sup>2,✉</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://zhuang2002.github.io/">Junhao Zhuang</a><sup>1</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://yutian10.github.io/">Yutian Chen</a><sup>1</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://liuquande.github.io/">Quande Liu</a><sup>2</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://xinntao.github.io/">Xintao Wang</a><sup>2</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://scholar.google.com/citations?user=P6MraaYAAAAJ&hl=en">Pengfei Wan</a><sup>2</sup>
+                    </span>
+                    <span class="author-block">
+                        <a href="https://tianfan.info/">Tianfan Xue</a><sup>2,3,✉</sup>
+                    </span>
+                </div>
+
+                <div class="author-affiliation">
+                    <span class="affiliation-text"><sup>1</sup>MMLab, CUHK,  <sup>2</sup>Kling Team, Kuai Shou Technology,<sup>3</sup>CPII under InnoHK,<sup>✉</sup>Corresponding author
+                </div>
+            </div>
+
+
+
+            <!-- Keywords 区域 -->
+            <div class="section-nav">
+                <span class="section-nav-item">Multi-shot Long Video Generation</span>
+                <span class="section-nav-item">Efficient Causal Architecture </span>
+                <span class="section-nav-item">Interactive Storytelling</span>
+            </div>
+            
+            <div class="tldr-wrapper">
+                <p class="abstract-text"> <b>TL;DR</b>: ShotStream is a novel <b>causal multi-shot architecture</b> that enables <b>interactive storytelling</b> and <b>efficient on-the-fly frame generation</b>, achieving <b>16 FPS</b> on a single NVIDIA GPU. </p>
+            </div>
+            <div class="demo-video-section">
+            <video src="videos/demo.mp4" controls autoplay="false" style="width: 82%; border: 2px solid black; border-radius: 0px;"></video>
+            </div>
+        </section>
+    </div>
+
+    <!-- 1.5 新增：独立的导航栏卡片 -->
+    <div class="content-card nav-card">
+        <div class="global-nav">
+            <a href="#generation" class="global-nav-item">Long Multi-Shot Video Generation</a>
+            <a href="#comparison" class="global-nav-item">Comparison</a>
+            <a href="#ablation" class="global-nav-item">Ablation Study</a>
+            <a href="#more-results" class="global-nav-item">More Results</a>
+            <a href="#abstract" class="global-nav-item">Abstract</a>
+            <a href="#method" class="global-nav-item">Method</a>
+        </div>
+    </div>
+
+    <!-- 2. Generation Card -->
+    <div class="content-card">
+        <section class="section" id="generation">
+            <h2 class="section-title">Long Multi-Shot Video Generation</h2>
+            <div class="tldr-wrapper" style="margin-top: 0.5rem; margin-bottom: 3rem; text-align: left;">
+                <p class="abstract-text">
+                    Each case presented here illustrates a generated sequence comprising 5-6 consecutive shots and nearly 500 total frames, demonstrating the model’s ability to maintain narrative and visual consistency across scene transitions.
+                </p>
+                <p class="abstract-text" style="margin-top: 1rem;">
+                    <b>Note:</b> More results could be found in section <a href="#more-results" style="color: #d47d3f; text-decoration: none; font-weight: bold;">More Results</a>.
+                </p>
+            </div>
+            <div class="video-grid two-col">
+
+    
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/005.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A dramatic scene unfolds in a sunlit pine forest featuring a tense encounter between a man and a blonde woman, with a crying newborn baby present in a bassinet. The video alternates between emotional close-ups of the characters' faces and wider shots of their standoff amidst the tall, straight trees bathed in golden hour light.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot focuses on a troubled-looking man with messy dark hair, wearing a dark coat and grey scarf, looking downwards with a somber expression against a brightly lit, blurred forest background.
+                        <br>
+                        <b>[shot2]</b> The camera cuts to a close-up of a newborn baby wrapped in a white blanket, crying with its mouth open, resting inside a white woven bassinet in the forest setting.
+                        <br>
+                        <b>[shot3]</b> A medium shot reveals the man, seen from behind, standing opposite a blonde woman in a white coat who looks at him with a surprised and concerned expression, set against the dramatic vertical lines of the sunlit pine trees.
+                        <br>
+                        <b>[shot4]</b> The camera pulls back for a slightly wider view of the man and woman facing each other in the forest, emphasizing the emotional distance between them in the golden light.
+                        <br>
+                        <b>[shot5]</b> A tight close-up on the blonde woman's face captures her worried and fearful expression, her blonde hair strongly backlit by the warm, setting sun.
+                        <br>
+                        <b>[shot6]</b> The scene returns to a medium shot of the man and woman facing each other in the woods, maintaining their tense standoff as the golden light continues to stream through the dense trees behind them.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/007.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A comedic scene unfolds in a bizarre dining setting featuring an indoor grass floor. A small black and white dog excitedly runs towards a plate of salad placed on the ground. The video cuts back and forth between the dog investigating its unexpected meal and the shocked, disgusted reactions of two women sitting nearby in formal pink dresses.
+                        <br><br>
+                        <b>[shot1]</b> A small black and white dog runs from left to right across a faux-grass floor towards a plate of salad resting on the ground. Two formal black dining chairs sit empty in the background against dark red curtains and wooden slats.
+                        <br>
+                        <b>[shot2]</b> The camera cuts to a close-up of a Black woman with an elegant updo, wearing a pink strapless dress and a silver heart necklace. She looks off-camera with an expression of profound shock and mild disgust.
+                        <br>
+                        <b>[shot3]</b> A close-up profile shot shows the dog panting happily, its attention fixed on the plate of food just out of frame to the right.
+                        <br>
+                        <b>[shot4]</b> The scene cuts back to the first woman in the pink dress, her face still frozen in a look of disbelief and concern as she continues to watch the situation unfold.
+                        <br>
+                        <b>[shot5]</b> Another close-up profile of the dog, now looking down intently, sniffing at the plate of salad that is partially visible at the bottom of the frame.
+                        <br>
+                        <b>[shot6]</b> A close-up reveals a second Black woman, also styled in a pink strapless dress and heart necklace. She is looking off-camera, her mouth open in a wide expression of surprised exasperation.
+                    </div>
+                </div>
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/001.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features a series of close-up shots of different men in traditional or historical attire, suggesting a serious conversation or meeting.
+                        <br><br>
+                        <b>[shot1]</b> A man with a grey beard and a decorative silver headpiece is speaking.
+                        <br>
+                        <b>[shot2]</b> A man wearing a dark helmet and armor listens attentively in profile.
+                        <br>
+                        <b>[shot3]</b> A close-up focuses on a hand resting on a patterned surface.
+                        <br>
+                        <b>[shot4]</b> An elderly man with long white hair and beard looks downwards in contemplation.
+                        <br>
+                        <b>[shot5]</b> The man in armor is now seen speaking, looking slightly off-camera.
+                        <br>
+                        <b>[shot6]</b> The first man with the grey beard looks downwards, appearing serious.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/014.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> In a vibrant animated scene, a cheerful star-shaped character interacts with a round, pink-skinned child. The star floats around the child and a group of officials in a theater-like setting, eventually getting held by the child before dancing away into the spotlight.
+                        <br><br>
+                        <b>[shot1]</b> A yellow, star-shaped character with a green leaf hat floats in front of a mirror with lit bulbs, greeting the viewer with a smile.
+                        <br>
+                        <b>[shot2]</b> The scene shifts to a wider view of a theater room where the star floats near a round, pink-skinned child and two men in military-style uniforms sitting at a desk.
+                        <br>
+                        <b>[shot3]</b> A close-up of the child's face shows an expression of surprise and slight concern as they look around at the floating star.
+                        <br>
+                        <b>[shot4]</b> The star character continues to fly around the room, circling near the child's head while the child watches it intently.
+                        <br>
+                        <b>[shot5]</b> The child reaches out and gently holds the star in arms, smiling at it while an official at the desk watches.
+                        <br>
+                        <b>[shot6]</b> The star character flies away from the child toward the center of the stage, spinning and dancing in a bright spotlight.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/006.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                    <b>[global caption]</b> A blonde woman in a black jacket and a bald Black man in a purple shirt are having a conversation across a red and gold desk in an opulent room with gold furniture and large windows. The scene cuts between close-ups of their faces as they talk and a wide shot establishing their positions at the desk.
+                        <br><br>
+                        <b>[shot1]</b> A close-up of a blonde woman with bright red lipstick and gold stud earrings, looking attentively off-camera with a neutral expression in an ornate room setting.
+                        <br>
+                        <b>[shot2]</b> A close-up of a bald Black man with a grey goatee, wearing a purple button-down shirt and patterned tie, speaking with a slight smile.
+                        <br>
+                        <b>[shot3]</b> A wide shot showing the woman and man seated facing each other at an ornate, gold-trimmed red desk. The woman has an open laptop and documents in front of her, while the man sits opposite her. Behind them is a gold, tufted sofa and two large windows with lit lamps on either side.
+                        <br>
+                        <b>[shot4]</b> A close-up returns to the man, who is looking towards the woman (off-camera) with a soft, slightly amused expression.
+                        <br>
+                        <b>[shot5]</b> A close-up of the woman, her brow slightly furrowed and mouth slightly open, appearing concerned or surprised by the ongoing conversation.
+                        <br>
+                        <b>[shot6]</b> A close-up of the man speaking again, his expression more serious as he continues the discussion.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/011.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> An elderly couple stands in a brightly lit living room, engaged in a serious conversation while a young boy listens intently. The scene alternates between wide shots of the three figures and close-ups of the man and woman as they speak to one another.
+                        <br><br>
+                        <b>[shot1]</b> A wide shot shows an elderly man in a suit and an older woman in a floral cardigan standing side-by-side in a living room, looking toward a young boy who stands facing them.
+                        <br>
+                        <b>[shot2]</b> A close-up of the elderly man, wearing glasses and a dark suit, as he speaks with a concerned expression.
+                        <br>
+                        <b>[shot3]</b> A close-up of the woman, with her silver hair neatly styled, looking at the man with a serious and attentive look.
+                        <br>
+                        <b>[shot4]</b> The camera cuts back to the elderly couple standing together, looking at each other while they talk.
+                        <br>
+                        <b>[shot5]</b> A medium wide shot shows the couple and the boy, capturing the spatial arrangement of the room and the focus of the three individuals.
+                        <br>
+                        <b>[shot6]</b> A close-up shot focuses again on the man and woman as they continue their discussion, highlighting the tension and gravity in their exchange.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/001.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                    <b>[global caption]</b> The video depicts a tense scene in a sandy, desolate environment where a bearded man armed with a sniper rifle is engaged in a standoff. He is seen aiming his weapon, reacting to his surroundings, and pursuing a mysterious masked figure.
+                    <br><br>
+                    <b>[shot1]</b> A close-up shot shows a bearded man intently looking through the scope of a large rifle, with a distorted "STOP" sign and sandy background visible.
+                    <br>
+                    <b>[shot2]</b> The camera pulls back to show the man standing up, holding his rifle and looking to the side, while two bodies lie on the ground behind him amidst sandbags.
+                    <br>
+                    <b>[shot3]</b> The view shifts to over the armed man's shoulder, showing him aiming his rifle towards a person dressed in black with a white face mask walking away towards a building.
+                    <br>
+                    <b>[shot4]</b> The armed man runs forward, following the masked figure as they walk away between large stacks of sandbags.
+                    <br>
+                    <b>[shot5]</b> The video ends with another close-up of the bearded man aiming his rifle through the scope, his expression focused and serious.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/003.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features an adult red fox and a smaller, lighter-colored fox in a vibrant green field with small yellow flowers. The footage captures them together, as well as in individual close-ups, before showing them moving around their natural habitat.
+                        <br><br>
+                        <b>[shot1]</b> An adult red fox and a smaller fox stand together in a grassy field.
+                        <br>
+                        <b>[shot2]</b> A close-up shot shows the smaller fox sitting near a small dirt patch or hole in the grass.
+                        <br>
+                        <b>[shot3]</b> A profile close-up focuses on the head and thick fur of the adult red fox.
+                        <br>
+                        <b>[shot4]</b> The smaller fox is seen from a distance trotting across the grassy field.
+                        <br>
+                        <b>[shot5]</b> Both foxes are captured moving around the grassy field; the adult fox walks past a dirt mound towards the left edge of the frame, while the smaller one moves towards the right in the background.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/017.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A middle-aged man in a suit and a young woman in a hoodie review a mysterious document together. The scene features close-ups of the document's unique circular seal and the focused expressions of the two individuals as they exchange the folder, suggesting a serious or investigative context.
+                        <br><br>
+                        <b>[shot1]</b> A medium shot of a man in a formal dark suit and striped tie, looking down at an open folder with a concentrated expression.
+                        <br>
+                        <b>[shot2]</b> A close-up of two pairs of hands holding a leather folder open, revealing a page with a distinct gray circular seal or insignia in the center.
+                        <br>
+                        <b>[shot3]</b> An over-the-shoulder shot showing a young woman with short dark hair, wearing a gray and blue hoodie, looking intently at the documents being held by the man.
+                        <br>
+                        <b>[shot4]</b> A medium shot of the man looking up and speaking to the woman, his expression professional and serious.
+                        <br>
+                        <b>[shot5]</b> A close-up of the young woman as she focuses on the contents of the folder, holding it with both hands.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/002.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> An animated sequence features a man and a woman in a lush forest setting interacting with a white bird. The scene follows them as they hold the bird before releasing it to fly freely into the sunlit woods.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot introduces a woman wearing a red hat and jacket, holding a white bird, while a man in a black suit stands beside her, looking at her.
+                        <br>
+                        <b>[shot2]</b> The camera focuses tightly on the woman's face, showing her with an engaged expression, with the white bird visible just next to her.
+                        <br>
+                        <b>[shot3]</b> The view pulls back slightly to show the man now holding the white bird, which starts to flap its wings in his hands.
+                        <br>
+                        <b>[shot4]</b> The man releases the bird, and both characters are seen from the side watching as the bird takes flight.
+                        <br>
+                        <b>[shot5]</b> The video concludes with a wide landscape shot of the vibrant forest, following the white bird as it flies away over a field of colorful flowers towards the bright sun.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/019.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video provides a series of cinematic views of a gorilla troop in a lush, misty forest, highlighting their powerful physical features and peaceful social interactions.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot focuses on a gorilla's dark, furry hand resting on a vibrant moss-covered rock in a dense green forest.
+                        <br>
+                        <b>[shot2]</b> A medium shot captures a gorilla sitting calmly with another standing right behind it in a misty, verdant landscape.
+                        <br>
+                        <b>[shot3]</b> A wider view shows a group of gorillas gathered near a foggy riverbank, including one gorilla in the background holding a piece of green fruit.
+                        <br>
+                        <b>[shot4]</b> A gorilla is seen resting on a large moss-covered boulder while another smaller gorilla moves across the foreground in the misty woods.
+                        <br>
+                        <b>[shot5]</b> The final shot is a striking, detailed portrait of a gorilla with a reddish-brown crest looking directly at the camera with a steady, calm gaze.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/020.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A man in traditional Chinese attire is seen riding a horse through a rocky, mountainous landscape at night, interspersed with close-up shots highlighting his serious and contemplative facial expressions.
+                        <br><br>
+                        <b>[shot1]</b> A man in dark clothing rides a brown horse up a grassy, rocky hillside under a dark night sky.
+                        <br>
+                        <b>[shot2]</b> A wide cinematic shot shows the man and horse standing still in a vast, dark valley surrounded by forested mountains.
+                        <br>
+                        <b>[shot3]</b> A close-up focuses on the young man's face; he has long black hair and is wearing a dark robe with a brown fur-trimmed vest, looking directly at the camera with a serious expression.
+                        <br>
+                        <b>[shot4]</b> Another wide shot from a different angle shows the man on his horse, stationary in the dark, hilly terrain.
+                        <br>
+                        <b>[shot5]</b> A final close-up of the man shows him looking off to the side, his expression remains pensive and serious against the dark background.
+                    </div>
+                </div>     
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/008.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A scene showing an older man examining a silver watch before engaging in a conversation with a younger blonde man. The sequence alternates between close-ups of the watch and the faces of the two men as they speak to each other in a dimly lit indoor setting.
+                        <br><br>
+                        <b>[shot1]</b> A close-up focuses on a pair of older hands holding a silver wrist watch with a black face, turning it slightly to view the dial.
+                        <br>
+                        <b>[shot2]</b> A close-up of an older man with a mustache and round glasses, wearing a dark coat over a blue shirt and tie, as he speaks with a serious expression.
+                        <br>
+                        <b>[shot3]</b> The camera cuts to a close-up of a younger man with short blonde hair, wearing a brown jacket over a white t-shirt, listening with a slight, subtle smile.
+                        <br>
+                        <b>[shot4]</b> The shot returns to the older man, still speaking and looking slightly downwards, maintaining a solemn demeanor.
+                        <br>
+                        <b>[shot5]</b> Another close-up of the younger man, who is now speaking, looking directly off-camera with an engaged expression.
+                        <br>
+                        <b>[shot6]</b> The final shot is a close-up of the older man again, listening quietly and looking down, concluding the sequence.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/004.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A man wearing a headset is working at a computer console in a high-tech control room, accompanied by a blue and silver robot with glowing red eyes. The scene alternates between close-ups of the robot, the man's focused face, and his hands typing on a keyboard, suggesting a serious operation or interaction between the human and the machine.
+                        <br><br>
+                        <b>[shot1]</b> A close-up of a blue and silver robot with bright red eyes standing in a high-tech room. A man's arm, wearing a watch, is visible in the foreground.
+                        <br>
+                        <b>[shot2]</b> The camera provides a slightly wider view of the robot's upper body, revealing more of its blue chest armor with yellow details as it stands motionless.
+                        <br>
+                        <b>[shot3]</b> A close-up profile shot focuses on a young man wearing a black headset, looking intently at a screen with a serious expression.
+                        <br>
+                        <b>[shot4]</b> An over-the-shoulder shot shows the back of the man's head as he looks towards a computer monitor, with the robot standing in the background.
+                        <br>
+                        <b>[shot5]</b> A medium shot captures the man in profile as he focuses on his work, with the robot positioned behind him in the background.
+                        <br>
+                        <b>[shot6]</b> A close-up shot focuses on the man's hands as he types steadily on a white computer keyboard, with bright monitors visible in the background.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/022.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features adorable orange hamsters exploring a bright, sunny garden filled with green grass, purple flowers, and rustic props like a basket of corn and a metal bucket.
+                        <br><br>
+                        <b>[shot1]</b> Two small orange hamsters are seen foraging in thick green grass near vibrant purple flowers, a basket of corn, and a small silver bucket.
+                        <br>
+                        <b>[shot2]</b> The pair of hamsters scurry across the lawn, passing by the woven basket and the metal bucket in the warm sunlight.
+                        <br>
+                        <b>[shot3]</b> The hamsters transition from the grass to a small patch of soil, continuing their exploration near the props.
+                        <br>
+                        <b>[shot4]</b> A single hamster is shown exploring the base of the corn-filled basket on the green grass.
+                        <br>
+                        <b>[shot5]</b> A detailed close-up shot focuses on one hamster sitting in the grass, looking curiously toward the camera with its bright eyes.
+                    </div>
+                </div>   
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/024.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> This animated sequence depicts a tense standoff between a green-haired girl and a fearsome horned beast in a vast, snow-covered mountain landscape.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot introduces a young girl with vibrant green hair looking up at a large, black-furred monster that wears a decorated helmet with sharp white horns.
+                        <br>
+                        <b>[shot2]</b> The monster is seen from a distance, standing in a barren, snowy plain with a backdrop of towering, snow-capped mountains.
+                        <br>
+                        <b>[shot3]</b> A tight close-up focuses on the monster's face, highlighting its fierce red eyes, sharp fangs, and the golden detailing on its black helmet.
+                        <br>
+                        <b>[shot4]</b> The camera angle shifts to a low view, showing a pair of legs in bright green stockings and matching high-heeled shoes standing on the dry, snowy ground.
+                        <br>
+                        <b>[shot5]</b> The video ends with a close-up of the green-haired girl, capturing her pensive and slightly troubled expression as she looks off-camera.
+                    </div>
+                </div>  
+
+            </div>
+        </section>
+    </div>
+
+    <div class="content-card">
+        <section class="section" id="comparison">
+            <h2 class="section-title">Comparison</h2>
+        
+            <div class="tldr-wrapper" style="margin-top: 0.5rem; margin-bottom: 3rem; text-align: center;">
+                <p class="abstract-text">
+                    Compared to open-source baselines of similar scale, our method shows higher fidelity to multi-shot prompts, achieving exceptional visual consistency and smooth transitions.
+                </p>
+            </div>
+
+            <div class="comparison-grid" style="margin-bottom: 4rem;">
+                <div class="comparison-item">
+                    <div class="comparison-label">Mask2DiT</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/mask2dit.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">EchoShot</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/Echoshot.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">CineTrans</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/Cinetrans.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Self Forcing</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/self-forcing.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">LongLive</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/Longlive.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Rolling Forcing</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/rollingforcing.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Infinity-Rope</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/infinite-rope.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label" style="color: #d47d3f; font-weight: 800;">Ours</div>
+                    <div class="comparison-video-wrapper">
+                        <div class="comparison-video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/compare/ShotStream.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-caption">
+                            <b>[global caption]</b> Two elegantly dressed women and three uniformed security personnel are gathered in an office, engaged in a conversation that transitions from tense exchanges to moments of shared understanding.
+                            <br><br>
+                            <b>[shot1]</b> A close-up shot focuses on a blonde woman wearing red-rimmed glasses and a thick gold chain necklace as she speaks with a serious, determined expression.
+                            <br>
+                            <b>[shot2]</b> The camera cuts to a close-up of a woman with long, dark hair and a similar gold necklace, who is smiling confidently while listening.
+                            <br>
+                            <b>[shot3]</b> Returning to the blonde woman in red glasses, she is seen speaking again, her facial expression suggesting she is explaining or arguing a point.
+                            <br>
+                            <b>[shot4]</b> A wide shot reveals the entire group in an office setting with filing cabinets; the two women stand at a desk while three men in light blue uniforms stand behind them.
+                            <br>
+                            <b>[shot5]</b> The video concludes with another close-up of the blonde woman, who looks upward with a thoughtful and slightly more relaxed expression.
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </section>
+    </div>
+
+    <div class="content-card">
+        <section class="section" id="ablation">
+            <h2 class="section-title">Ablation Study</h2>
+            <div class="tldr-wrapper" style="margin-top: 0.5rem; margin-bottom: 3rem; text-align: center;">
+            <p class="abstract-text">
+                We perform ablation studies to validate the key design choices and training strategies of the causal student models. 1) <i>Dual-Cache Distinction Strategy:</i> To justify the need to separate global from local caches, we compare our proposed RoPE offset (Ours) against a baseline with no distinction (w/o Indicator) and a variant using a learnable embedding applied to the target video's first chunk (Learnable Emb.). The results demonstrate that explicit distinction is essential (Learnable Emb. vs. Ours), and our training-free RoPE offset outperforms the learnable embedding approach (Learnable Emb. vs. Ours). 2) <i>Causal Distillation Training:</i> We evaluate our two-stage distillation strategy against single-stage baselines (Only Stage 1 and Only Stage 2). Both stages prove indispensable: stage 1 establishes foundational next-shot generation capabilities, while stage 2 faithfully simulates inference to bridge the train-test gap.
+            </p>
+            </div>
+            
+            <div class="ablation-grid">
+                
+                <!-- Item 1: w/o Indicator (左上) -->
+                <div class="ablation-item-wrapper">
+                    <div class="video-label">w/o Indicator</div>
+                    <div class="video-item">
+                        <div class="video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/ablation/woindicator.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 2: Learnable Emb. (中上) -->
+                <div class="ablation-item-wrapper">
+                    <div class="video-label">Learnable Emb.</div>
+                    <div class="video-item">
+                        <div class="video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/ablation/learnable_emb.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 3: Ours (右侧，跨两行，垂直居中) -->
+                <div class="ablation-item-wrapper">
+                    <div class="video-label" style="color: #d47d3f; font-weight: 800;">Ours</div>
+                    <div class="video-item">
+                        <div class="video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/ablation/ours.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-caption">
+                            <b>[global caption]</b> The video depicts a tense and apocalyptic scene where a massive, winged creature confronts a woman sitting inside a van amidst a ruined, dusty cityscape during sunset.
+                            <br><br>
+                            <b>[shot1]</b> A close-up shot shows a dark, scaly creature with wings shrieking or roaring next to a green van, with the ruins of a city visible in the background.
+                            <br>
+                            <b>[shot2]</b> The camera pulls back to a wide shot, showing the creature standing in a desolate, debris-filled landscape behind the van as dust swirls around.
+                            <br>
+                            <b>[shot3]</b> From the perspective of the van's interior, the creature's silhouette with its large, sharp wings is seen through the windshield, looming over the road.
+                            <br>
+                            <b>[shot4]</b> A side profile of a woman with short dark hair shows her looking out of the van's window with a focused and wary expression.
+                            <br>
+                            <b>[shot5]</b> A low-angle shot captures the creature spreading its enormous, feathered wings wide against a vibrant pink and orange sky, towering over the destroyed buildings.
+                            <br>
+                            <b>[shot6]</b> The video ends with a close-up of the woman's face, her eyes wide with shock and concern as she gazes at the creature.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 4: Only Stage 1 (左下) -->
+                <div class="ablation-item-wrapper">
+                    <div class="video-label">Only Stage 1</div>
+                    <div class="video-item">
+                        <div class="video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/ablation/only_stage1.mp4" type="video/mp4">
+                            </video>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item 5: Only Stage 2 (中下) -->
+                <div class="ablation-item-wrapper">
+                    <div class="video-label">Only Stage 2</div>
+                    <div class="video-item">
+                        <div class="video-container">
+                            <video controls loop muted preload="none" loading="lazy">
+                                <source src="videos/ablation/only_stage2.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+
+    <div class="content-card">
+        <section class="section" id="more-results">
+            <h2 class="section-title">More Results</h2>
+            <div class="video-grid two-col">
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/016.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features two young animated birds, one brown and one grey, interacting and talking in a colorful field of flowers under a clear blue sky.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot shows a young brown bird and a grey-and-white bird standing among tall green grass and vibrant purple flowers, looking at one another.
+                        <br>
+                        <b>[shot2]</b> The camera pulls back slightly to show the two birds in profile against a field of flowers and a bright blue sky, with a flock of smaller birds flying in the distance.
+                        <br>
+                        <b>[shot3]</b> A medium shot captures the two birds standing on a brown path next to the flower field, continuing their animated conversation.
+                        <br>
+                        <b>[shot4]</b> The focus shifts to a tight close-up of the grey-and-white bird's face as its eyes widen and beak opens in surprise, while the brown bird stands just behind it.
+                        <br>
+                        <b>[shot5]</b> The final shot shows both birds standing together with their wings slightly outspread, looking at each other as if sharing a moment of realization or excitement.
+                    </div>
+                </div> 
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/002.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video depicts a tense and emotional battlefield scene, focusing on a soldier's stunned reaction to a fallen comrade amidst smoke and a desolate, sandy landscape.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot shows a soldier in a green uniform and cap, holding a rifle with a shocked and intense expression as smoke drifts in the background.
+                        <br>
+                        <b>[shot2]</b> A wide shot captures a soldier lying on the sandy ground in a smoke-filled battlefield, while another soldier walks toward him.
+                        <br>
+                        <b>[shot3]</b> The camera returns to a close-up of the first soldier, whose face is frozen in a wide-eyed, stunned expression.
+                        <br>
+                        <b>[shot4]</b> The soldier is seen crouching beside the fallen man on the ground, with thick smoke rising in the desolate environment.
+                        <br>
+                        <b>[shot5]</b> Another close-up focuses on the soldier's face, now showing a look of extreme distress or urgency as he shouts.
+                        <br>
+                        <b>[shot6]</b> The final shot shows the soldier from behind, standing and looking down at the body on the ground as white smoke billows around them.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/012.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A police officer in uniform and a man wearing a trench coat and fedora, holding a UFO magazine, have a tense conversation inside a dimly lit, cluttered storage room. The scene captures a mysterious atmosphere as the two men exchange information while surrounded by items covered in plastic sheets.
+                        <br><br>
+                        <b>[shot1]</b> A medium shot shows the police officer and the man in the trench coat standing in a dark room with windows, discussing as the officer gestures with his hand.
+                        <br>
+                        <b>[shot2]</b> A quick pan across the room reveals storage shelves covered in plastic, highlighting the cluttered and secretive environment.
+                        <br>
+                        <b>[shot3]</b> A medium shot features the officer talking and pointing as the man in the trench coat listens, holding his magazine.
+                        <br>
+                        <b>[shot4]</b> The camera focuses on the man in the fedora, who stands still in the dim light, looking towards the officer with a serious, slightly guarded expression.
+                        <br>
+                        <b>[shot5]</b> The officer continues to speak, pointing his finger toward something off-camera, maintaining an authoritative tone.
+                        <br>
+                        <b>[shot6]</b> A close-up of the man in the trench coat as he listens, his face illuminated just enough to show his focused reaction to the officer's words.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/004.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> This animated sequence showcases beautifully rendered farm animals in a softly lit barn environment, focusing on their gentle interactions and adorable appearances.
+                        <br><br>
+                        <b>[shot1]</b> A fluffy, light-colored piglet stands next to a brown horse with a white stripe on its face inside a wooden barn.
+                        <br>
+                        <b>[shot2]</b> A close-up portrait shows a white lamb looking directly forward, softly backlit to create a glowing effect around its ears and fleece.
+                        <br>
+                        <b>[shot3]</b> A fuzzy, tan-colored animal stands facing a small pink piglet that is sitting in a pile of hay, with the legs of another large animal visible in the background.
+                        <br>
+                        <b>[shot4]</b> The camera focuses closer on the interaction, showing the back of the furry, tan animal looking down at the small pink piglet in the hay.
+                        <br>
+                        <b>[shot5]</b> A tight close-up captures the small pink piglet sitting alone in the hay, gazing upwards with a sweet expression against a dark background.
+                    </div>
+                </div>
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/011.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video captures several exotic birds with prominent red crests and white faces in a sun-lit, arid landscape. It showcases close-up views of their unique features and group shots as they move through the dusty terrain during the golden hour.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot focuses on the head of a bird with a bright red crest and white facial markings, set against a blurred, golden-hued background.
+                        <br>
+                        <b>[shot2]</b> A group of these birds are seen on sandy ground, with one bird in the foreground kicking up dust as it moves.
+                        <br>
+                        <b>[shot3]</b> The birds are shown walking away through dry, thin branches, with the sunlight creating long shadows on the ground.
+                        <br>
+                        <b>[shot4]</b> Another close-up profile captures the bird looking intently towards the left, emphasizing its sharp beak and detailed feather patterns.
+                        <br>
+                        <b>[shot5]</b> The sequence ends with a wider shot of several birds standing together in the brush, illuminated by the warm light of the setting sun.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/013.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A high-stakes poker game is underway, featuring intense close-ups of an older, serious-looking man and the dramatic movements of his hands as he maneuvers cards and stacks of chips on a green felt table. The atmosphere is heavy with tension and focus, emphasized by the dramatic lighting on the player’s face.
+                        <br><br>
+                        <b>[shot1]</b> A close-up of an older man with gray hair, looking off-camera with a solemn, intense expression.
+                        <br>
+                        <b>[shot2]</b> The camera cuts to the man's hands as he skillfully shuffles and deals playing cards onto a green felt surface next to stacks of colorful casino chips.
+                        <br>
+                        <b>[shot3]</b> A dramatic close-up of another man's face, also appearing older with lighter hair, illuminated in the dark, maintaining a steady and piercing gaze.
+                        <br>
+                        <b>[shot4]</b> The scene returns to the first man, whose expression remains focused and serious as he contemplates his next move.
+                        <br>
+                        <b>[shot5]</b> A close-up focuses on the man's hands as he fans out a hand of cards and then places them down on a stack of chips.
+                        <br>
+                        <b>[shot6]</b> The final shot is a tight close-up of the second man's face, his eyes fixed intensely on his opponent, heightening the dramatic tension of the game.
+                    </div>
+                </div>
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/023.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> In a sun-dappled forest, a tense and somber encounter occurs between a man in a black polo shirt and another in a grey long-sleeved shirt, as they stand over a third man lying motionless and bloodied on the ground.
+                        <br><br>
+                        <b>[shot1]</b> A gruesome close-up shows a man lying on the forest floor with his eyes closed and streaks of blood running down his face.
+                        <br>
+                        <b>[shot2]</b> A man wearing a black polo shirt sits on the ground, looking up with a look of concern and inquiry toward someone standing over him.
+                        <br>
+                        <b>[shot3]</b> A man in a grey long-sleeved shirt stands quietly in the forest, looking down thoughtfully with a somber expression.
+                        <br>
+                        <b>[shot4]</b> The camera focuses on the man in the black polo shirt as he speaks, his face conveying worry and distress.
+                        <br>
+                        <b>[shot5]</b> A wide shot reveals the two men standing opposite each other in a clearing, with the unconscious man lying on the ground between them.
+                    </div>
+                </div>
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/026.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The animated sequence features two skunk characters and a young girl, all wearing orange backpacks, interacting in a vibrant forest setting next to a large tree stump.
+                        <br><br>
+                        <b>[shot1]</b> Two cartoon skunks with orange backpacks stand close together, looking at each other; one skunk has a pink flower on its head.
+                        <br>
+                        <b>[shot2]</b> The skunk characters are shown in a medium shot, standing in a forest clearing in front of a large, freshly-cut tree stump.
+                        <br>
+                        <b>[shot3]</b> A close-up shot focuses on a young girl with brown pigtails and an orange backpack, her expression appearing slightly worried or pensive.
+                        <br>
+                        <b>[shot4]</b> The young girl and one of the skunks are seen standing together in front of the large tree stump, engaging in a conversation.
+                        <br>
+                        <b>[shot5]</b> A final close-up shows the skunk with the pink flower looking directly at the young girl as they continue their interaction.
+                    </div>
+                </div>   
+
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/015.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> In a high-quality 3D animated sequence, a human-looking man with curly hair and a dark-skinned cyborg with glowing blue eyes engage in an intense, serious conversation. They are framed by a backdrop of mysterious, metallic-looking soldiers, suggesting a sci-fi military or political confrontation.
+                        <br><br>
+                        <b>[shot1]</b> A medium close-up of a man with brown curly hair, wearing a reddish-brown jacket with silver armor plating, looking seriously at his companion.
+                        <br>
+                        <b>[shot2]</b> A close-up of a bald, dark-skinned cyborg with glowing blue eyes and metallic forehead implants, standing still with an imposing presence.
+                        <br>
+                        <b>[shot3]</b> A side-profile view of the cyborg, showing the detailed silver headgear and mechanical armor, as he listens to the other man.
+                        <br>
+                        <b>[shot4]</b> A medium shot of the man in the reddish-brown jacket, who maintains a steady, determined expression while talking to the cyborg.
+                        <br>
+                        <b>[shot5]</b> A profile view of the cyborg looking towards the man, highlighting his intense, glowing blue eyes and stoic facial features.
+                        <br>
+                        <b>[shot6]</b> A final close-up of the man in the reddish-brown jacket, who continues to look intently at his companion, completing the tense exchange.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/6shots/003.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A man in a suit and a young woman are engaged in a serious and tense conversation in a professional setting. The scene cuts back and forth between them to highlight their intense facial expressions and the weight of their discussion.
+                        <br><br>
+                        <b>[shot1]</b> A close-up over-the-shoulder shot focuses on a young woman with long dark hair as she speaks with a concerned and serious expression.
+                        <br>
+                        <b>[shot2]</b> The camera switches to an over-the-shoulder shot of a middle-aged man in a dark suit and blue shirt as he speaks intently to the woman.
+                        <br>
+                        <b>[shot3]</b> Returning to the woman, she is shown listening carefully before responding, her face reflecting worry and pensiveness.
+                        <br>
+                        <b>[shot4]</b> A close-up of the man shows him continuing the conversation with a grave and authoritative tone.
+                        <br>
+                        <b>[shot5]</b> The focus returns to the woman, who appears troubled and deep in thought as she listens to the man.
+                        <br>
+                        <b>[shot6]</b> The final shot captures the man as he finishes speaking, maintaining a focused and serious demeanor.
+                    </div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/007.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features an animated scene of an elf-like character intently focused on a notepad, writing or crossing things out, before looking up with an expression of sudden realization or concern.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot introduces a pale, elf-like animated character with pointy ears and dark, messy hair, wearing a red plaid shirt, looking down at a notepad with a blue and white pen in hand.
+                        <br>
+                        <b>[shot2]</b> The camera zooms in on the character's hands as they use the pen to cross out a line of illegible, cursive-like text on the yellow notepad.
+                        <br>
+                        <b>[shot3]</b> The view returns to the character's face, showing him continuing to stare down at the notepad with a serious, concentrated expression.
+                        <br>
+                        <b>[shot4]</b> Another close-up on the notepad shows the character's hand writing or crossing out more of the text.
+                        <br>
+                        <b>[shot5]</b> The scene concludes with the character looking up from the notepad, his eyes widening in apparent surprise or realization.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/005.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A tense conversation takes place in a dimly lit room, possibly a boardroom or an office, between a man in a purple suit and an older woman in a purple jacket. The interaction transitions from a serious exchange to the woman smiling warmly, followed by the man leaning over the table towards her.
+                        <br><br>
+                        <b>[shot1]</b> A medium shot shows a man wearing a vibrant purple suit and matching tie, looking slightly off-camera with a confused or concerned expression. Behind him, a red "EXIT" sign is clearly visible against a dark background.
+                        <br>
+                        <b>[shot2]</b> The camera angle shifts to an over-the-shoulder view from behind a person in a purple suit, focusing on an older woman with short grey hair sitting across a dark, polished table. She wears a dark purple jacket, and glasses of water and some papers rest on the table between them.
+                        <br>
+                        <b>[shot3]</b> A close-up shot focuses on the face of the man in the purple suit, who has a dark goatee and is looking intently towards the right, appearing to listen closely. The blurred back of a grey-haired person's head is visible in the lower right foreground.
+                        <br>
+                        <b>[shot4]</b> The view cuts back to the older woman, who is now smiling brightly and looking towards the left, with the red "EXIT" sign glowing in the background behind her.
+                        <br>
+                        <b>[shot5]</b> A wider shot captures the room's setting, showing the man in the purple suit standing up from his chair and leaning over the table towards the seated older woman, who continues to look at him calmly.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/006.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A serious conversation unfolds in a hospital room between a doctor and a concerned woman. The scene cuts back and forth between them, and briefly shows a male patient resting in a hospital bed nearby.
+                        <br><br>
+                        <b>[shot1]</b> A close-up over the shoulder of a doctor focuses on a woman wearing a purple shirt, who is speaking with a concerned expression, an IV drip clearly visible beside her.
+                        <br>
+                        <b>[shot2]</b> The angle changes to an over-the-shoulder shot of the woman, now focusing on the male doctor in a white lab coat over a red shirt as he talks to her.
+                        <br>
+                        <b>[shot3]</b> The view returns to the woman in the purple shirt, capturing her looking somber and listening intently to the doctor.
+                        <br>
+                        <b>[shot4]</b> A wider shot shows a male patient lying still in a hospital bed with his eyes closed, while the doctor stands at his bedside, speaking.
+                        <br>
+                        <b>[shot5]</b> The camera cuts back to the over-the-shoulder shot of the woman in the purple shirt, showing her looking worried as she speaks to the doctor again.
+                    </div>
+                </div>
+
+
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/008.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A black and white lemur is observed in a forest setting characterized by tall, thin, light-colored trees. The video provides close-up views of the animal's face and follows its movements as it interacts with a tree and walks across the forest floor.
+                        <br><br>
+                        <b>[shot1]</b> A close-up profile shot shows the head of a black and white lemur with striking yellow eyes looking off to the right, against a softly blurred background of thin stalks.
+                        <br>
+                        <b>[shot2]</b> The lemur is seen from the side, clinging to a rough tree trunk with its white-furred arms, seemingly peering around the edge of the tree.
+                        <br>
+                        <b>[shot3]</b> A wider shot reveals the lemur standing on a ground covered in brown leaves within a dense forest of slender, vertical trees; it briefly turns to look directly at the camera.
+                        <br>
+                        <b>[shot4]</b> The lemur walks horizontally across the frame from left to right on the leaf-strewn ground, its long tail trailing behind it.
+                        <br>
+                        <b>[shot5]</b> Filmed from behind, the lemur walks away from the camera deeper into the forest, eventually disappearing behind a larger tree trunk on the right side of the frame.
+                    </div>
+                </div>
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/009.mp4" type="video/mp4">
+                        </video>
+                    </div>
+
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video features a close-up dialogue between a woman with short blonde hair and a man with a shaved head. They are standing outdoors with a background of green bamboo stalks. The camera alternates between over-the-shoulder shots of each character as they converse.
+                        <br><br>
+                        <b>[shot1]</b> An over-the-shoulder shot focuses on the blonde woman wearing a white t-shirt with a green badge, looking at the man and speaking.
+                        <br>
+                        <b>[shot2]</b> The camera angle switches to focus on the man in a grey hoodie, seen over the woman's shoulder, as he speaks and gestures slightly.
+                        <br>
+                        <b>[shot3]</b> The view returns to the woman, who now has a gentle smile as she listens or responds to the man.
+                        <br>
+                        <b>[shot4]</b> The focus shifts back to the man, who continues talking with an earnest expression.
+                        <br>
+                        <b>[shot5]</b> The scene cuts back to the woman one last time, her expression appearing slightly more attentive and serious as she looks at the man.
+                    </div>
+                </div>
+
+                
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/010.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> This animated sequence features a young woman and an older man in a dark, atmospheric forest setting. The scene focuses on the woman's expressions as she listens to the man, who appears to be a traveling companion or guide, while they stand near a stream amidst dense, gnarled trees.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot shows a young woman with long brown hair, bright blue eyes, and pinkish makeup, looking forward with a slight, subtle smile.
+                        <br>
+                        <b>[shot2]</b> The camera shifts to an over-the-shoulder view from behind the woman, revealing a dark, misty forest with twisted tree trunks and a small stream flowing through the center.
+                        <br>
+                        <b>[shot3]</b> Returning to a close-up, the woman's expression becomes more serious and contemplative as she gazes downward.
+                        <br>
+                        <b>[shot4]</b> A medium shot introduces a man with a goatee, wearing a green robe and carrying a purple backpack, who is smiling and speaking to the woman.
+                        <br>
+                        <b>[shot5]</b> The final shot shows the man standing a short distance away by the forest stream, looking back and continuing to talk to the woman, whose back is visible in the foreground.
+                    </div>
+                </div>
+
+
+                
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/012.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> This peaceful sequence follows an adult bear and its cub as they navigate a sun-dappled forest. The video highlights the cub's inquisitive nature as it peeks through branches and attempts to climb trees, ending with a heartwarming moment of affection between the parent and child.
+                        <br><br>
+                        <b>[shot1]</b> An adult bear and its cub are seen standing together in a forest clearing filled with tall trees and large, smooth grey rocks.
+                        <br>
+                        <b>[shot2]</b> A close-up shows the bear cub peering curiously through the soft green needles of a pine branch.
+                        <br>
+                        <b>[shot3]</b> The cub stands up on its hind legs, leaning against a tall tree trunk as it explores the texture of the bark.
+                        <br>
+                        <b>[shot4]</b> The adult bear walks gracefully through the rocky forest floor, illuminated by the bright, warm sunlight filtering through the trees.
+                        <br>
+                        <b>[shot5]</b> The cub and the adult bear meet at the base of a tree, where the cub gently nuzzles the adult's face in a tender interaction.
+                    </div>
+                </div>               
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/013.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> Two women with red hair, one older and one younger, are engaged in a serious and emotional conversation in a busy hospital hallway. The scene alternates between close-up shots of each woman as they exchange words in a professional yet tense atmosphere.
+                        <br><br>
+                        <b>[shot1]</b> A close-up of a mature woman with long, wavy red hair and a gold cross necklace, speaking with a concerned expression while hospital staff move in the background.
+                        <br>
+                        <b>[shot2]</b> The camera cuts to a close-up of a younger woman with her red hair pulled back in a ponytail, wearing a white collared shirt and dark blazer, speaking earnestly.
+                        <br>
+                        <b>[shot3]</b> The view returns to the older woman, who is listening intently with a grave and attentive facial expression as the discussion continues.
+                        <br>
+                        <b>[shot4]</b> A close-up of the younger woman again, continuing her explanation with a focused and determined look.
+                        <br>
+                        <b>[shot5]</b> The older woman responds, looking directly at the younger woman, her expression remaining serious amid the active corridor setting.
+                    </div>
+                </div>
+                
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/014.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A group of warriors in historical or fantasy-style armor are gathered in a vast, snowy mountain landscape, appearing prepared for an impending battle or assembly under the leadership of a stern, bearded man.
+                        <br><br>
+                        <b>[shot1]</b> A close-up features a man with long reddish-brown hair and a full beard, wearing fur-trimmed armor and looking seriously toward someone off-camera.
+                        <br>
+                        <b>[shot2]</b> A wide shot reveals a large army of warriors in dark armor and hoods, standing in formation within a desolate, snowy valley between high peaks.
+                        <br>
+                        <b>[shot3]</b> The leader is seen in a medium shot, holding a large battle axe over his shoulder as he looks upward with a determined expression.
+                        <br>
+                        <b>[shot4]</b> A medium shot depicts several fierce-looking warriors standing together, all with similar long hair and beards, clad in heavy armor.
+                        <br>
+                        <b>[shot5]</b> The scene concludes with another close-up of the leader, who appears to be speaking or shouting commands with a resolute look on his face.
+                    </div>
+                </div>    
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/015.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                    <b>[global caption]</b> A man and a woman are seen in a warm, flirtatious exchange in what appears to be a library or study. The camera alternates between close-up shots of each person, capturing their happy expressions and genuine smiles as they converse.
+                    <br><br>
+                    <b>[shot1]</b> A close-up shot features a woman with dark hair pulled back in a ponytail, smiling and speaking softly while looking at a man whose shoulder is partially visible in the foreground.
+                    <br>
+                    <b>[shot2]</b> The camera angle shifts to a close-up of a man with wavy blonde hair and a beard, who is looking at the woman with a broad, affectionate smile.
+                    <br>
+                    <b>[shot3]</b> Returning to the woman, the camera captures her smiling even more brightly as she continues the conversation, with a bookshelf filled with volumes in the background.
+                    <br>
+                    <b>[shot4]</b> A close-up of the man shows him laughing or smiling widely, clearly entertained and engaged by what the woman is saying.
+                    <br>
+                    <b>[shot5]</b> The video concludes with another shot of the woman, who maintains her cheerful and animated expression as she continues to talk to the man.
+                    </div>
+                </div>
+                
+                
+   
+                
+
+                
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/018.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A young girl and an older woman are engaged in a serious and emotionally heavy conversation in a dimly lit indoor setting. The camera alternates between close-up shots of each person, capturing their expressions of concern, sadness, and empathy as they speak to one another.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot features a young girl with brown hair looking saddened or worried, her gaze fixed on someone off-camera.
+                        <br>
+                        <b>[shot2]</b> The camera angle shifts to an older woman with dark, curly hair wearing a blue shirt, who is speaking earnestly and with a concerned expression.
+                        <br>
+                        <b>[shot3]</b> Returning to the young girl, she is shown with a pensive and somber expression, listening intently to the woman.
+                        <br>
+                        <b>[shot4]</b> A close-up of the older woman captures her speaking once more, her face filled with empathy and focus as she continues the conversation.
+                        <br>
+                        <b>[shot5]</b> The final shot focuses on the young girl's face as she looks slightly downward, appearing reflective and thoughtful about what has been said.
+                    </div>
+                </div>                    
+
+          
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/021.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> A large brown bear is captured exploring a rocky beach, interacting with seagulls and entering the breaking waves of the ocean.
+                        <br><br>
+                        <b>[shot1]</b> A large brown bear stands on a rocky shore, looking out towards the ocean where several white seagulls are perched or flying nearby.
+                        <br>
+                        <b>[shot2]</b> The bear is seen from the front, standing alert on the dark pebbles as white waves crash behind it.
+                        <br>
+                        <b>[shot3]</b> The bear begins to walk into the shallow water, with seagulls flying around in the foreground and background.
+                        <br>
+                        <b>[shot4]</b> A profile view shows the bear walking steadily along the water's edge, its wet fur glistening as waves break in the background.
+                        <br>
+                        <b>[shot5]</b> The bear turns and walks deeper into the surf, splashing as it moves through the foamy blue water.
+                    </div>
+                </div>
+                
+                
+                
+  
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/025.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> The video depicts a group of men in an outdoor, rocky setting, seemingly part of an expedition or search party. The shots alternate between tense close-ups of different individuals and a medium shot of the entire group gathered in a narrow rocky corridor, highlighting a mood of serious focus and determination.
+                        <br><br>
+                        <b>[shot1]</b> A close-up shot focuses on a man wearing a patterned headband and a beaded necklace, looking intensely at something ahead with wide eyes and a serious expression.
+                        <br>
+                        <b>[shot2]</b> A close-up shows a young man with dark hair in a light-colored denim-style jacket looking off to the side with a concerned and pensive expression.
+                        <br>
+                        <b>[shot3]</b> The camera returns to a close-up of the man with the headband, who looks focused and slightly to his left as he observes his surroundings.
+                        <br>
+                        <b>[shot4]</b> A medium shot captures a group of men and at least one woman standing in a narrow rocky passageway; the man with the headband appears to be leading the group and giving instructions.
+                        <br>
+                        <b>[shot5]</b> The final shot is a close-up of another man with a goatee looking downwards, appearing somber and contemplative amidst the rugged environment.
+                    </div>
+                </div>
+                
+                
+
+                <div class="video-item">
+                    <div class="video-container">
+                        <video controls loop muted preload="none" loading="lazy">
+                            <source src="videos/5shots/027.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-caption">
+                        <b>[global caption]</b> This animated sequence captures a young man with a facial wound standing on a balcony at sunset, reflecting on his surroundings with a somber and pensive demeanor.
+                        <br><br>
+                        <b>[shot1]</b> A close-up profile shows the young man looking down, a bloodstain visible on his cheek as the sun sets behind distant mountains.
+                        <br>
+                        <b>[shot2]</b> A wide shot from behind depicts the man standing on a stone balcony with a wooden railing, gazing out at a serene mountain range under a golden sky.
+                        <br>
+                        <b>[shot3]</b> A close-up focuses on the man's hands resting still at his sides as he stands on the textured floor of the balcony.
+                        <br>
+                        <b>[shot4]</b> A medium profile shot shows the man looking out towards the misty hills, with the warm evening light reflecting off his brown jacket.
+                        <br>
+                        <b>[shot5]</b> The final shot is another close-up of his face as he looks down with a sorrowful expression, deep in thought amidst the quiet beauty of the landscape.
+                    </div>
+                </div>  
+            </div>
+        </section>
+    </div>
+
+
+
+
+    <!-- 8. Abstract Card -->
+    <div class="content-card">
+        <section class="section" id="abstract">
+            <div class="abstract-section">
+                <h2 class="abstract-title">Abstract</h2>
+                <p class="abstract-text">
+                    Multi-shot video generation is crucial for long narrative storytelling, yet current bidirectional
+                    architectures suffer from limited interactivity and high latency. We propose <b>ShotStream</b>, a
+                    novel causal multi-shot architecture that enables interactive storytelling and efficient on-the-fly
+                    frame generation. By reformulating the task as next-shot generation conditioned on historical context,
+                    ShotStream allows users to dynamically instruct ongoing narratives via streaming prompts. We achieve
+                    this by first fine-tuning a text-to-video model into a bidirectional next-shot generator, which is then
+                    distilled into a causal student via Distribution Matching Distillation. To overcome the challenges of
+                    inter-shot consistency and error accumulation inherent in autoregressive generation, we introduce two
+                    key innovations. First, a <b>dual-cache memory mechanism</b> preserves visual coherence: a <i>global
+                    context cache</i> retains conditional frames for inter-shot consistency, while a <i>local context
+                    cache</i> holds generated frames within the current shot for intra-shot consistency. And a RoPE
+                    discontinuity indicator is employed to explicitly distinguish the two caches to eliminate ambiguity.
+                    Second, to mitigate error accumulation, we propose a <b>two-stage distillation strategy</b>. This
+                    begins with intra-shot self-forcing conditioned on ground-truth historical shots and progressively
+                    extends to inter-shot self-forcing using self-generated histories, effectively bridging the train-test
+                    gap. Extensive experiments demonstrate that ShotStream generates coherent multi-shot videos with
+                    sub-second latency, achieving 16 FPS on a single GPU. It matches or exceeds the quality of slower
+                    bidirectional models, paving the way for real-time interactive storytelling. Code and models will be
+                    released.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <div class="content-card">
+        <section class="section" id="method">
+            <div class="abstract-section">
+                <h2 class="abstract-title">Method</h2>
+                
+                <p class="abstract-text">
+                We first fine-tune a text-to-video model into a bidirectional next-shot model.
+                </p>
+
+                <div style="margin: 2rem auto; text-align: center; width: 100%;">
+                    <img src="figs/teacher.png" alt="Teacher Model" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.95rem; color: #555; margin-top: 0.5rem; font-family: 'Lato', sans-serif;">
+                        <b>Figure 1.</b> Overview of the Bidirectional Teacher Model.
+                    </p>
+                </div>
+
+                <p class="abstract-text">
+                The next-shot model is subsequently distilled into an efficient, 4-step causal model via Distribution Matching Distillation. We also propose a novel <b>dual-cache memory mechanism</b> and a <b>two-stage distillation strategy</b> to enable efficient, robust, and long-horizon multi-shot generation.
+                </p>
+
+                <div style="margin: 2rem auto; text-align: center; width: 80%;">
+                    <img src="figs/student.png" alt="Student Model" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.95rem; color: #555; margin-top: 0.5rem; font-family: 'Lato', sans-serif;">
+                        <b>Figure 2.</b> Overview of the Causal Student Model.
+                    </p>
+                </div>
+
+            </div> 
+        </section>
+    </div>
+
+    <script>
+        // Auto-play videos when they come into viewport
+        const observerOptions = {
+            threshold: 0.5,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                    video.play().catch(e => console.log('Autoplay prevented:', e));
+                } else {
+                    video.pause();
+                }
+            });
+        }, observerOptions);
+
+        // Observe all videos
+        document.querySelectorAll('video').forEach(video => {
+            observer.observe(video);
+        });
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', () => {
+            const videos = document.querySelectorAll('video');
+            if (document.hidden) {
+                videos.forEach(video => video.pause());
+            }
+        });
+
+        // Handle caption expand/collapse
+        function initCaptionToggles() {
+            const captions = document.querySelectorAll('.video-caption');
+
+            captions.forEach(caption => {
+                // Wrap existing content in caption-content div
+                const content = caption.innerHTML;
+                caption.innerHTML = `
+                    <div class="caption-content">${content}</div>
+                    <button class="caption-toggle" aria-label="Toggle caption">+</button>
+                `;
+
+                const contentDiv = caption.querySelector('.caption-content');
+                const toggleBtn = caption.querySelector('.caption-toggle');
+
+                if (contentDiv.innerHTML.length <= 50) {
+                    // If caption is short, remove toggle button
+                    toggleBtn.style.display = 'none';
+                    return;
+                }
+                toggleBtn.addEventListener('click', () => {
+                    contentDiv.classList.toggle('expanded');
+                    toggleBtn.textContent = contentDiv.classList.contains('expanded') ? '−' : '+';
+                });
+            });
+        }
+
+        // Initialize caption toggles after DOM is loaded
+        initCaptionToggles();
+    </script>
+</body>
+
+</html>
