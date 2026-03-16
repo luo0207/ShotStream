@@ -280,6 +280,23 @@
             z-index: 1;
         }
 
+        /* --- 作者列表颜色控制 --- */
+        .author-block {
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        .author-block a {
+            color: #000000; /* 默认黑色 */
+            text-decoration: none; /* 去除下划线 */
+            transition: color 0.3s ease; /* 平滑过渡 */
+        }
+
+        .author-block a:hover {
+            color: #d47d3f; /* 悬浮变橙色 */
+        }
+        /* ----------------------------------- */
+
         .tldr-wrapper {
             max-width: 800px; 
             width: 100%;
@@ -507,7 +524,7 @@
                 </div>
 
                 <div class="author-affiliation">
-                    <span class="affiliation-text"><sup>1</sup>MMLab, CUHK,  <sup>2</sup>Kling Team, Kuai Shou Technology,<sup>3</sup>CPII under InnoHK,<sup>✉</sup>Corresponding author
+                    <span class="affiliation-text"><sup>1</sup>MMLab, CUHK,  <sup>2</sup>Kling Team, Kuai Shou Technology,<sup>3</sup>CPII under InnoHK,<sup>✉</sup>Corresponding author</span>
                 </div>
             </div>
 
