@@ -44,13 +44,14 @@
             overflow: hidden;
         }
 
-.publication-links {
+        /* --- 按钮区域间距调整 --- */
+        .publication-links {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin: 10px 0 30px 0;
+            margin-bottom: 3rem; /* 距离下方 TL;DR 的间距 */
             z-index: 10;
             position: relative;
         }
@@ -59,7 +60,6 @@
             display: inline-block;
         }
 
-        /* 覆盖代码里的 is-dark，强制改成图片中的白底黑字风格 */
         .button.external-link {
             display: inline-flex;
             align-items: center;
@@ -71,16 +71,16 @@
             font-weight: 700;
             font-size: 1.05rem;
             padding: 10px 24px;
-            border-radius: 40px; /* 胶囊圆角 */
+            border-radius: 40px; 
             border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* 初始阴影 */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); 
             transition: all 0.3s ease;
         }
 
         .button.external-link:hover {
-            transform: translateY(-3px); /* 悬浮上移 */
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* 阴影加深 */
-            color: #d47d3f; /* 文字变主题橙色 */
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); 
+            color: #d47d3f; 
             border-color: rgba(212, 125, 63, 0.3);
         }
 
@@ -95,7 +95,6 @@
             transition: color 0.3s ease;
         }
         
-        /* 移动端适配 */
         @media (max-width: 768px) {
             .publication-links {
                 gap: 10px;
@@ -106,10 +105,9 @@
             }
         }
 
-        /* 新增：专门为导航栏设计的窄卡片样式 */
         .nav-card {
             padding: 25px 40px;
-            margin: -20px auto 40px auto; /* 向上拉近一点与头部的距离 */
+            margin: -20px auto 40px auto; 
             z-index: 10;
         }
 
@@ -125,7 +123,6 @@
             }
         }
 
-        /* 视频卡片样式 */
         .video-item {
             position: relative;
             background: #e8e3d7;
@@ -233,11 +230,12 @@
             color: #3C3026;
         }
 
+        /* --- 标签(Keywords)区域间距调整 --- */
         .section-nav {
             display: flex;
             justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
+            gap: 0.8rem; /* 标签之间的横向间距 */
+            margin-bottom: 2rem; /* 距离下方按钮的间距 */
             position: relative;
             z-index: 1;
             flex-wrap: wrap;
@@ -265,7 +263,6 @@
             transform: translateY(-1px);
         }
 
-        /* --- 独立导航栏样式 --- */
         .global-nav {
             display: flex;
             justify-content: center;
@@ -304,7 +301,6 @@
         .global-nav-item:hover::after {
             width: 100%;
         }
-        /* ----------------------------------- */
 
         .hero-logo {
             max-width: 80%;
@@ -334,47 +330,47 @@
             z-index: 0;
         }
 
+        /* --- 标题间距调整 --- */
         .hero-subtitle {
             font-family: 'Libre Baskerville', serif;
             font-size: clamp(1rem, 2.5vw, 1.5rem);
             color: #444444;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem; /* 距离下方作者的间距 */
             font-weight: 400;
             letter-spacing: 0.05em;
             position: relative;
             z-index: 1;
         }
 
-        /* --- 作者列表颜色控制 --- */
+        /* --- 作者与机构区域间距调整 --- */
         .authors-section {
-            margin-top: 2rem; /* 增加与上方 Keywords 标签的间距 */
-            margin-bottom: 1.5rem; /* 增加与下方 arXiv/Code 按钮的间距 */
+            margin-bottom: 1.5rem; /* 距离下方标签(Keywords)的间距 */
         }
 
         .authors {
             font-size: 1.15rem;
-            margin-bottom: 0.5rem; /* 增加作者列表与下方机构列表之间的间距 */
+            margin-bottom: 0.8rem; /* 作者名字与下方机构的间距 */
         }
 
         .author-affiliation {
             font-size: 1rem;
             color: #444444;
         }
+
         .author-block {
             display: inline-block;
             margin: 0 8px;
         }
 
         .author-block a {
-            color: #000000; /* 默认黑色 */
-            text-decoration: none; /* 去除下划线 */
-            transition: color 0.3s ease; /* 平滑过渡 */
+            color: #000000; 
+            text-decoration: none; 
+            transition: color 0.3s ease; 
         }
 
         .author-block a:hover {
-            color: #d47d3f; /* 悬浮变橙色 */
+            color: #d47d3f; 
         }
-        /* ----------------------------------- */
 
         .tldr-wrapper {
             max-width: 800px; 
@@ -575,11 +571,7 @@
             <p class="hero-subtitle">Streaming Multi-Shot Video Generation for Interactive Storytelling</p>
             
             <!-- Keywords 区域 -->
-            <div class="section-nav">
-                <span class="section-nav-item">Multi-shot Long Video Generation</span>
-                <span class="section-nav-item">Efficient Causal Architecture </span>
-                <span class="section-nav-item">Interactive Storytelling</span>
-            </div>
+
             
             <div class="authors-section">
                 <div class="authors">
@@ -612,6 +604,12 @@
                 <div class="author-affiliation">
                     <span class="affiliation-text"><sup>1</sup>MMLab, CUHK,  <sup>2</sup>Kling Team, Kuai Shou Technology,<sup>3</sup>CPII under InnoHK,<sup>✉</sup>Corresponding author</span>
                 </div>
+            </div>
+
+            <div class="section-nav">
+                <span class="section-nav-item">Multi-shot Long Video Generation</span>
+                <span class="section-nav-item">Efficient Causal Architecture </span>
+                <span class="section-nav-item">Interactive Storytelling</span>
             </div>
 
             <!-- PUBLICATION LINKS -->
