@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +42,68 @@
             padding: 50px 40px;
             position: relative;
             overflow: hidden;
+        }
+
+.publication-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0 30px 0;
+            z-index: 10;
+            position: relative;
+        }
+
+        .link-block {
+            display: inline-block;
+        }
+
+        /* 覆盖代码里的 is-dark，强制改成图片中的白底黑字风格 */
+        .button.external-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            color: #333333;
+            text-decoration: none;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 10px 24px;
+            border-radius: 40px; /* 胶囊圆角 */
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* 初始阴影 */
+            transition: all 0.3s ease;
+        }
+
+        .button.external-link:hover {
+            transform: translateY(-3px); /* 悬浮上移 */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* 阴影加深 */
+            color: #d47d3f; /* 文字变主题橙色 */
+            border-color: rgba(212, 125, 63, 0.3);
+        }
+
+        .button.external-link .icon {
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .button.external-link .icon i {
+            transition: color 0.3s ease;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .publication-links {
+                gap: 10px;
+            }
+            .button.external-link {
+                padding: 8px 18px;
+                font-size: 0.95rem;
+            }
         }
 
         /* 新增：专门为导航栏设计的窄卡片样式 */
@@ -494,7 +559,14 @@
         <section class="hero-section">
             <img src="figs/shotstream_logo.png" class="hero-logo" alt="ShotStream Logo">
             <p class="hero-subtitle">Streaming Multi-Shot Video Generation for Interactive Storytelling</p>
-
+            
+            <!-- Keywords 区域 -->
+            <div class="section-nav">
+                <span class="section-nav-item">Multi-shot Long Video Generation</span>
+                <span class="section-nav-item">Efficient Causal Architecture </span>
+                <span class="section-nav-item">Interactive Storytelling</span>
+            </div>
+            
             <div class="authors-section">
                 <div class="authors">
                     <span class="author-block">
@@ -528,18 +600,51 @@
                 </div>
             </div>
 
-
-
-            <!-- Keywords 区域 -->
-            <div class="section-nav">
-                <span class="section-nav-item">Multi-shot Long Video Generation</span>
-                <span class="section-nav-item">Efficient Causal Architecture </span>
-                <span class="section-nav-item">Interactive Storytelling</span>
+            <!-- PUBLICATION LINKS -->
+            <div class="column has-text-centered">
+                <div class="publication-links fixed-width-icons">
+                    
+                    <!-- 1. arXiv 按钮 -->
+                    <span class="link-block">
+                        <!-- ↓↓↓ 把这里的 "#" 换成你的真实 arXiv 链接 ↓↓↓ -->
+                        <a href="#" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon"><i class="ai ai-arxiv"></i></span>
+                            <span>arXiv</span>
+                        </a>
+                    </span>
+                    
+                    <!-- 2. Code 按钮 -->
+                    <span class="link-block">
+                        <!-- ↓↓↓ 把这里的 "#" 换成你的真实 GitHub 链接 ↓↓↓ -->
+                        <a href="https://github.com/KlingAIResearch/ShotStream" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon"><i class="fab fa-github"></i></span>
+                            <span>Code</span>
+                        </a>
+                    </span>
+                    
+                    <!-- 3. Dataset 按钮 -->
+                    <span class="link-block">
+                        <a href="https://huggingface.co/KlingTeam/ShotStream" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon">🤗</span>
+                            <span>Models</span>
+                        </a>
+                    </span>
+                    
+                    <!-- 4. BibTeX 按钮 -->
+                    <!-- <span class="link-block">
+                        <a href="#bibtex" class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon" style="font-size: 0.9em;"><i class="fas fa-quote-right"></i></span>
+                            <span>BibTeX</span>
+                        </a>
+                    </span> -->
+                    
+                </div>
             </div>
-            
+
             <div class="tldr-wrapper">
                 <p class="abstract-text"> <b>TL;DR</b>: ShotStream is a novel <b>causal multi-shot architecture</b> that enables <b>interactive storytelling</b> and <b>efficient on-the-fly frame generation</b>, achieving <b>16 FPS</b> on a single NVIDIA GPU. </p>
             </div>
+
             <div class="demo-video-section">
             <video src="videos/demo.mp4" controls autoplay="false" style="width: 82%; border: 2px solid black; border-radius: 0px;"></video>
             </div>
@@ -1810,3 +1915,5 @@
 </body>
 
 </html>
+
+
