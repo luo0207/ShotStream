@@ -1945,12 +1945,7 @@
     </div>
     <script>
         function copyBibTeX(btn) {
-            var text = `@article{luo2026shotstream,
-                title={ShotStream: Streaming Multi-Shot Video Generation for Interactive Storytelling},
-                author={Luo, Yawen and Shi, Xiaoyu and Zhuang, Junhao and Chen, Yutian and Liu, Quande and Wang, Xintao and Wan, Pengfei and Xue, Tianfan},
-                journal={arXiv preprint arXiv:2603.25746},
-                year={2026}
-                }`;
+            var text = "@article{luo2026shotstream,\n  title={ShotStream: Streaming Multi-Shot Video Generation for Interactive Storytelling},\n  author={Luo, Yawen and Shi, Xiaoyu and Zhuang, Junhao and Chen, Yutian and Liu, Quande and Wang, Xintao and Wan, Pengfei and Xue, Tianfan},\n  journal={arXiv preprint arXiv:2603.25746},\n  year={2026}\n}";
             navigator.clipboard.writeText(text).then(function() {
                 var toast = document.getElementById('copy-toast');
                 toast.style.opacity = '1';
