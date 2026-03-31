@@ -558,6 +558,51 @@
         .video-item {
             animation: fadeIn 0.6s ease-out forwards;
         }
+
+        /* --- Citation Styles (from CamCloneMaster) --- */
+        .citation-container {
+            position: relative;
+            background-color: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            margin-top: 10px;
+            padding: 40px 15px 15px 15px;
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        }
+        .citation-container pre {
+            margin: 0;
+            padding: 0;
+            border: none;
+            background-color: transparent;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.45;
+            color: #1f2328;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            background-color: #ffffff;
+            color: #24292f;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 0 rgba(27,31,36,0.04);
+        }
+        .copy-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #1f2328;
+        }
+        .copy-btn i {
+            color: #57606a;
+        }
     </style>
 </head>
 
@@ -643,10 +688,10 @@
                     
                     <!-- 4. BibTeX 按钮 -->
                     <span class="link-block">
-                        <button onclick="copyBibTeX(this)" class="external-link button is-normal is-rounded is-dark" style="cursor:pointer; border:1px solid rgba(0,0,0,0.05);">
+                        <a href="#" id="bibtexLink" class="external-link button is-normal is-rounded is-dark">
                             <span class="icon" style="font-size: 0.9em;"><i class="fas fa-quote-right"></i></span>
                             <span>BibTeX</span>
-                        </button>
+                        </a>
                     </span>
                     
                 </div>
@@ -1925,37 +1970,50 @@
     </script>
 
     <!-- BibTeX Section -->
-    <div class="content-card" style="padding: 30px 40px; position:relative;" id="bibtex">
-        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:1.5rem;">
-            <h2 class="section-title" style="margin-bottom:0;">BibTeX</h2>
-            <button onclick="copyBibTeX(this)" style="background:#3C3026; color:#D1B392; border:none; border-radius:6px; padding:6px 16px; font-size:0.85rem; cursor:pointer; font-family:'Lato',sans-serif; font-weight:700; transition:background 0.2s; white-space:nowrap;" onmouseover="this.style.background='#d47d3f'" onmouseout="this.style.background='#3C3026'">
-                <i class="fas fa-copy" style="margin-right:5px;"></i>Copy
+    <div class="content-card" style="padding: 30px 40px;" id="bibtex">
+        <h2 class="section-title" style="text-align:center;">BibTeX</h2>
+        <div class="citation-container">
+            <button class="copy-btn" id="copyCitationBtn" aria-label="Copy to clipboard">
+                <i class="far fa-copy"></i>
             </button>
-        </div>
-        <pre id="bibtex-text" style="background:#f5f5f5; border-radius:8px; padding:20px; font-size:0.9rem; overflow-x:auto; text-align:left; white-space:pre;"><code>@article{luo2026shotstream,
+            <pre><code id="bibtexCode">@article{luo2026shotstream,
   title={ShotStream: Streaming Multi-Shot Video Generation for Interactive Storytelling},
   author={Luo, Yawen and Shi, Xiaoyu and Zhuang, Junhao and Chen, Yutian and Liu, Quande and Wang, Xintao and Wan, Pengfei and Xue, Tianfan},
   journal={arXiv preprint arXiv:2603.25746},
   year={2026}
 }</code></pre>
-    </div>
-    <!-- Copy toast notification -->
-    <div id="copy-toast" style="position:fixed; bottom:40px; left:50%; transform:translateX(-50%) translateY(20px); background:#3C3026; color:#D1B392; padding:10px 24px; border-radius:30px; font-family:'Lato',sans-serif; font-size:0.95rem; font-weight:700; opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s; z-index:9999;">
-        ✓ Copied!
+        </div>
     </div>
     <script>
-        function copyBibTeX(btn) {
-            var text = "@article{luo2026shotstream,\n  title={ShotStream: Streaming Multi-Shot Video Generation for Interactive Storytelling},\n  author={Luo, Yawen and Shi, Xiaoyu and Zhuang, Junhao and Chen, Yutian and Liu, Quande and Wang, Xintao and Wan, Pengfei and Xue, Tianfan},\n  journal={arXiv preprint arXiv:2603.25746},\n  year={2026}\n}";
-            navigator.clipboard.writeText(text).then(function() {
-                var toast = document.getElementById('copy-toast');
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-                setTimeout(function() {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(-50%) translateY(20px)';
-                }, 2000);
-            });
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var code = document.getElementById('bibtexCode');
+
+            // Bottom copy icon button
+            var copyBtn = document.getElementById('copyCitationBtn');
+            if (copyBtn && code) {
+                copyBtn.addEventListener('click', function() {
+                    navigator.clipboard.writeText(code.innerText).then(function() {
+                        var icon = copyBtn.querySelector('i');
+                        icon.className = 'fas fa-check';
+                        setTimeout(function() { icon.className = 'far fa-copy'; }, 2000);
+                    });
+                });
+            }
+
+            // Top BibTeX header button
+            var bibtexLink = document.getElementById('bibtexLink');
+            if (bibtexLink && code) {
+                bibtexLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigator.clipboard.writeText(code.innerText).then(function() {
+                        var textSpan = bibtexLink.querySelector('span:last-child');
+                        var orig = textSpan.innerText;
+                        textSpan.innerText = 'Copied!';
+                        setTimeout(function() { textSpan.innerText = orig; }, 2000);
+                    });
+                });
+            }
+        });
     </script>
 
     <!-- Acknowledgement Section -->
