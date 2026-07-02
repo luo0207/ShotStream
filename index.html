@@ -334,11 +334,44 @@
             font-family: 'Libre Baskerville', serif;
             font-size: clamp(1rem, 2.5vw, 1.5rem);
             color: #444444;
-            margin-bottom: 1.5rem; /* 距离下方作者的间距 */
+            margin-bottom: 1rem; /* 距离下方会议信息的间距 */
             font-weight: 400;
             letter-spacing: 0.05em;
             position: relative;
             z-index: 1;
+        }
+
+        .conference-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.45rem 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 125, 63, 0.45);
+            border-radius: 999px;
+            background: rgba(212, 184, 150, 0.18);
+            color: #3C3026;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .conference-badge-logo {
+            width: 56px;
+            height: auto;
+            display: block;
+        }
+
+        .conference-badge span {
+            display: flex;
+            align-items: center;
+            min-height: 28px;
+            font-size: 1.28rem;
+            line-height: 1;
+            transform: translateY(2px);
         }
 
         /* --- 作者与机构区域间距调整 --- */
@@ -613,6 +646,10 @@
         <section class="hero-section">
             <img src="figs/shotstream_logo.png" class="hero-logo" alt="ShotStream Logo">
             <p class="hero-subtitle">Streaming Multi-Shot Video Generation for Interactive Storytelling</p>
+            <div class="conference-badge">
+                <img src="figs/ECCV_2026_Logo.svg" class="conference-badge-logo" alt="ECCV 2026 Logo">
+                <span>ECCV 2026</span>
+            </div>
             
             <!-- Keywords 区域 -->
 
@@ -2023,5 +2060,3 @@
 </body>
 
 </html>
-
-
