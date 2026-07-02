@@ -50,7 +50,7 @@
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-bottom: 1rem; /* 【修改这里】原来是 3rem，现在改小为 1rem */
+            margin-bottom: 1.6rem; /* 【修改这里】原来是 3rem，现在改小为 1.6rem */
             z-index: 10;
             position: relative;
         }
@@ -334,7 +334,7 @@
             font-family: 'Libre Baskerville', serif;
             font-size: clamp(1rem, 2.5vw, 1.5rem);
             color: #444444;
-            margin-bottom: 1rem; /* 距离下方会议信息的间距 */
+            margin-bottom: 1.5rem; /* 距离下方作者的间距 */
             font-weight: 400;
             letter-spacing: 0.05em;
             position: relative;
@@ -342,14 +342,15 @@
         }
 
         .conference-badge {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 0.55rem;
-            padding: 0.45rem 1rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(212, 125, 63, 0.45);
-            border-radius: 999px;
-            background: rgba(212, 184, 150, 0.18);
+            gap: 0.65rem;
+            justify-content: center;
+            width: fit-content;
+            padding: 0;
+            margin-bottom: 0.8rem;
+            margin-left: auto;
+            margin-right: auto;
             color: #3C3026;
             font-family: 'Lato', sans-serif;
             font-weight: 700;
@@ -369,19 +370,27 @@
             display: flex;
             align-items: center;
             min-height: 28px;
-            font-size: 1.28rem;
+            font-size: 1.38rem;
             line-height: 1;
             transform: translateY(2px);
         }
 
         /* --- 作者与机构区域间距调整 --- */
         .authors-section {
-            margin-bottom: 1.5rem; /* 距离下方标签(Keywords)的间距 */
+            margin-bottom: 1rem; /* 距离下方会议信息的间距 */
         }
 
         .authors {
             font-size: 1.15rem;
             margin-bottom: 0.8rem; /* 作者名字与下方机构的间距 */
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.45rem 1.2rem;
+            max-width: 1050px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .author-affiliation {
@@ -389,9 +398,12 @@
             color: #444444;
         }
 
+        .author-affiliation sup {
+            margin-right: 0.12rem;
+        }
+
         .author-block {
             display: inline-block;
-            margin: 0 8px;
         }
 
         .author-block a {
@@ -646,10 +658,6 @@
         <section class="hero-section">
             <img src="figs/shotstream_logo.png" class="hero-logo" alt="ShotStream Logo">
             <p class="hero-subtitle">Streaming Multi-Shot Video Generation for Interactive Storytelling</p>
-            <div class="conference-badge">
-                <img src="figs/ECCV_2026_Logo.svg" class="conference-badge-logo" alt="ECCV 2026 Logo">
-                <span>ECCV 2026</span>
-            </div>
             
             <!-- Keywords 区域 -->
 
@@ -732,6 +740,11 @@
                     </span>
                     
                 </div>
+            </div>
+
+            <div class="conference-badge">
+                <img src="figs/ECCV_2026_Logo.svg" class="conference-badge-logo" alt="ECCV 2026 Logo">
+                <span>ECCV 2026</span>
             </div>
 
             <div class="tldr-wrapper">
